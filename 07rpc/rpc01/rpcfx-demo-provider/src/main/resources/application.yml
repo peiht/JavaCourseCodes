@@ -1,0 +1,14 @@
+server:
+  port: 8083
+  shutdown: graceful
+
+spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+  main:
+    allow-circular-references: true
+
+app:
+  id: app2
+  namespace: ns1
+  env: sit

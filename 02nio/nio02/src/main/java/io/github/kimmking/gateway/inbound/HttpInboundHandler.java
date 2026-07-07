@@ -1,5 +1,7 @@
 package io.github.kimmking.gateway.inbound;
 
+import io.github.kimmking.gateway.filter.HeaderHttpRequestFilter;
+import io.github.kimmking.gateway.filter.HttpRequestFilter;
 import io.github.kimmking.gateway.outbound.httpclient4.HttpOutboundHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -8,15 +10,18 @@ import io.netty.util.ReferenceCountUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+
 public class HttpInboundHandler extends ChannelInboundHandlerAdapter {
 
     private static Logger logger = LoggerFactory.getLogger(HttpInboundHandler.class);
-    private final String proxyServer;
+    private final List<String> proxyServer;
     private HttpOutboundHandler handler;
+    private HttpRequestFilter filter = new HeaderHttpRequestFilter();
     
-    public HttpInboundHandler(String proxyServer) {
+    public HttpInboundHandler(List<String> proxyServer) {
         this.proxyServer = proxyServer;
-        handler = new HttpOutboundHandler(this.proxyServer);
+        this.handler = new HttpOutboundHandler(this.proxyServer);
     }
     
     @Override
@@ -34,9 +39,14 @@ public class HttpInboundHandler extends ChannelInboundHandlerAdapter {
 //            if (uri.contains("/test")) {
 //                handlerTest(fullRequest, ctx);
 //            }
-    
-            handler.handle(fullRequest, ctx);
-    
+
+            String uri = fullRequest.getUri();
+            System.out.println("  uri ==>> " + uri);
+            if(uri.contains("/netty/info")) {
+                NettyInfoHandler.INSTANCE.handle(fullRequest, ctx);
+            } else {
+                handler.handle(fullRequest, ctx, filter);
+            }
         } catch(Exception e) {
             e.printStackTrace();
         } finally {
